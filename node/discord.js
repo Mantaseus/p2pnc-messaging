@@ -35,11 +35,11 @@ module.exports.startListening = (callbackReady, callbackMessage) => {
     discordClient.on('ready', () => {
         debug('Discord ready');
         module.exports.isListening = true;
-        callbackRead();
+        callbackReady();
     });
     
     discordClient.on('message', (msg) => {
-        if (peerClient && !peerClient.connected && msg.author.tag === config.discordServerBot.tag){
+        if (msg.author.tag === config.discordServerBot.tag){
             debug('Discord message received from server');
             debug(msg.content)
 
