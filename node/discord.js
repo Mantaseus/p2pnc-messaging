@@ -9,13 +9,18 @@ module.exports.isListening = false;
 module.exports.config = null
 module.exports._discordClient = null;
 
-module.exports.init = (config) => {
+module.exports.init = (config, isClient=true) => {
     module.exports.config = config;
+    module.exports.isClient = isClient;
 }
 
 module.exports.sendMessage = (msg, callback) => {
     const config = module.exports.config;
 
+    let auth = config.discordClientBot.token;
+    if (!module.exports.isClient)
+        auth = config.discordServerBot.token;
+        
     fetch(`https://discordapp.com/api/channels/${config.discordChannelId}/messages`, {
         method: 'post',
         body: JSON.stringify({
@@ -23,7 +28,7 @@ module.exports.sendMessage = (msg, callback) => {
         }),
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bot ${config.discordClientBot.token}`
+            'Authorization': `Bot ${auth}`
         }
     }).then((res) => { callback(res) });
 }
@@ -32,6 +37,13 @@ module.exports.startListening = (callbackReady, callbackMessage) => {
     const discordClient = new Discord.Client();
     const config = module.exports.config;
     
+    let auth = config.discordClientBot.token;
+    let tagOfTheOther = config.discordServerBot.tag;
+    if (!module.exports.isClient) {
+        auth = config.discordServerBot.token;
+        tagOfTheOther = config.discordClientBot.tag;
+    }
+        
     discordClient.on('ready', () => {
         debug('Discord ready');
         module.exports.isListening = true;
@@ -39,7 +51,7 @@ module.exports.startListening = (callbackReady, callbackMessage) => {
     });
     
     discordClient.on('message', (msg) => {
-        if (msg.author.tag === config.discordServerBot.tag){
+        if (msg.author.tag === tagOfTheOther){
             debug('Discord message received from server');
             debug(msg.content)
 
@@ -52,7 +64,7 @@ module.exports.startListening = (callbackReady, callbackMessage) => {
         }
     });
     
-    discordClient.login(config.discordClientBot.token);
+    discordClient.login(auth);
     module.exports._discordClient = discordClient;
 }
 
