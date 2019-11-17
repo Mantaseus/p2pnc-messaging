@@ -57,7 +57,9 @@ module.exports.startListening = (callbackReady, callbackMessage) => {
 
             if (module.exports.isListening) {
                 debug('Sending message to callback');
-                callbackMessage(msg.content);
+                callbackMessage(msg.content, (response, onSuccess) => {
+                    module.exports.sendMessage(response, onSuccess);
+                });
             } else {
                 debug('Listening has been stopped');
             }
