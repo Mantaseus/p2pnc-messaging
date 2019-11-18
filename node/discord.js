@@ -6,15 +6,27 @@ const debug = require('debug')('messaging:discord');
 // HELPERS ----------------------------------------------------------------------------------------
 
 function splitMessage(id, msg, charLimit) {
-    // TODO if the `msg` has more characters than discord allows in a single message then
-    //      Break apart `msg` into appropriately sized chunks
-    //      Surround the pieces with text to identify that the pieces are from the same session
-    // else
-    //      Start the `msg` with the id
-    //      Make sure that it now does not exceed the limit
-    //          We will need to break it up if it does
+    /*
+    We will reserve the first 20 characters of each message for identification of the session. Each
+    message would end up looking like this: 
+         `{id},{msg_index},{message_count}|{msg_piece}`
 
-    return [msg];
+        - `id` will always be truncated to 13 characters (leftmost characters will be removed)
+        - `msg_count` is the total number of messages in this session (will be 0 padded, max 99)
+        - `msg_index` is the index of the current message (starting at 0, will be 0 padded, max 99)
+        - `msg_piece` is the actual piece of the `msg` content we are trying to send
+    */
+
+    const headerSize = 20;
+    const msgPieceMaxSize = charLimit - headerSize;
+
+    let msgSplit = msg.match(new RegExp(`.{1,${msgPieceMaxSize}}`, 'g'));
+    msgSplit = _.map(msgSplit, (split, i) => {
+        return `${id},${i},${msgSplit.length}|${split}`;
+    });
+
+    console.log(msgSplit);
+    return msgSplit;
 }
 
 async function sendDiscordMessage(msg, channelId, auth) {
