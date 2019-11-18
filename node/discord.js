@@ -154,13 +154,13 @@ module.exports.startListening = (callbackReady, callbackMessage) => {
             const id = parseInt(regexGroups[1]);
             const splitIndex = parseInt(regexGroups[2]);
             const splitCount = parseInt(regexGroups[3]);
-            const split = regexGroups[4];
+            let split = regexGroups[4];
 
             // Convert any '`' at the end of the split to a ' '. But there may be more than 1 '`'
             // so we need to replace them all with just as many ' '
             endingSpaces = /(`+)$/g.exec(split);
             if (endingSpaces) {
-                split.replace(/`+$/g, endingSpaces[1].replace('`', ' '));
+                split = split.replace(/`+$/g, endingSpaces[1].replace('`', ' '));
             }
 
             const splitMerge = processSession(id, split, splitIndex, splitCount);
