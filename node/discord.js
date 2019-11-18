@@ -36,7 +36,6 @@ function splitMessage(id, msg, charLimit) {
     });
 
 
-    console.log(msgSplit);
     return msgSplit;
 }
 
@@ -73,18 +72,14 @@ function processSession(id, split, splitIndex, splitCount) {
 
             delete sessions[id];
 
-            console.log('a', fullMessage);
             return fullMessage;
         } else {
             // We still need more splits
             sessions[id].splits[splitIndex] = split;
-
-            console.log('b');
         }
     } else {
         if (splitCount === 1) {
             // Do not need to do anything special because this is the one and only split we expect
-            console.log('c');
             return split
         } else {
             // Start a new session
@@ -95,11 +90,9 @@ function processSession(id, split, splitIndex, splitCount) {
 
             // Add the split at the split index
             sessions[id].splits[splitIndex] = split;
-            console.log('d');
         }
     }
 
-    console.log('e');
     return false;
 }
 
@@ -165,7 +158,7 @@ module.exports.startListening = (callbackReady, callbackMessage) => {
 
             // Convert any '`' at the end of the split to a ' '. But there may be more than 1 '`'
             // so we need to replace them all with just as many ' '
-            endingSpaces = /`+$/g.exec(split);
+            endingSpaces = /(`+)$/g.exec(split);
             if (endingSpaces) {
                 split.replace(/`+$/g, endingSpaces[1].replace('`', ' '));
             }
@@ -175,7 +168,6 @@ module.exports.startListening = (callbackReady, callbackMessage) => {
                 return;
             }
 
-            console.log(splitMerge);
             if (module.exports.isListening) {
                 debug('Sending message to callback');
                 callbackMessage(splitMerge, (response, onSuccess) => {
