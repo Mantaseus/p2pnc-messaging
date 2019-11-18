@@ -1,8 +1,34 @@
 const Discord = require('discord.js');
 const fetch = require('node-fetch');
-
+const _ = require('lodash');
 const debug = require('debug')('messaging:discord');
 
+// HELPERS ----------------------------------------------------------------------------------------
+
+function splitMessage(id, msg, charLimit) {
+    // TODO if the `msg` has more characters than discord allows in a single message then
+    //      Break apart `msg` into appropriately sized chunks
+    //      Surround the pieces with text to identify that the pieces are from the same session
+    // else
+    //      Start the `msg` with the id
+    //      Make sure that it now does not exceed the limit
+    //          We will need to break it up if it does
+
+    return [msg];
+}
+
+async function sendDiscordMessage(msg, channelId, auth) {
+    await fetch(`https://discordapp.com/api/channels/${channelId}/messages`, {
+        method: 'post',
+        body: JSON.stringify({
+            content: msg
+        }),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bot ${auth}`
+        }
+    });
+}
 // MODULE CODE ------------------------------------------------------------------------------------
 
 module.exports.isListening = false;
@@ -14,23 +40,24 @@ module.exports.init = (config, isClient=true) => {
     module.exports.isClient = isClient;
 }
 
-module.exports.sendMessage = (msg, callback) => {
+module.exports.sendMessage = async (msg, callback, id='') => {
     const config = module.exports.config;
 
     let auth = config.discordClientBot.token;
     if (!module.exports.isClient)
         auth = config.discordServerBot.token;
-        
-    fetch(`https://discordapp.com/api/channels/${config.discordChannelId}/messages`, {
-        method: 'post',
-        body: JSON.stringify({
-            content: msg
-        }),
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bot ${auth}`
-        }
-    }).then((res) => { callback(res) });
+
+    // Create a new id if the id that is passed in is empty
+    if (!id) {
+        const date = new Date();
+        id = date.getTime();
+    }
+
+    // Split the message to work around the discord character limit
+    msgList = splitMessage(id, msg, config.discordCharacterLimit);
+    for (i in msgList) {
+        await sendDiscordMessage(msgList[i], config.discordChannelId, auth);
+    }
 }
 
 module.exports.startListening = (callbackReady, callbackMessage) => {
